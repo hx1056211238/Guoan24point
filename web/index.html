@@ -1,0 +1,239 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html lang="cn">
+<head>
+	<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+	<title>Document</title>
+	<style type="text/css">
+		.content{
+			width: 100%;
+			height:100%;
+			/* background-color: red; */  
+			/* overflow: hidden; */
+		}
+		.content-all{
+			width: 95%;
+			height: 95%;
+			margin: 0 auto;
+			/* background-color: blue; */ 
+		}
+
+		.senior{
+			margin-top:4%;
+		}
+		
+		input{
+			font-size: 16px;
+			height: 30px;
+			width: 95%;
+		}
+
+		.button1{
+			 padding-right: 3em;
+             padding-left: 3em;
+             margin-right: auto;
+             margin-left:auto;
+             padding-top:1em;
+             padding-bottom:1em!important;
+			 display:block;
+			 min-width:130px;
+		}
+		.button2{
+			 padding-right: 1em;
+             padding-left: 1em;
+             float:right;
+             margin-right: 0.5em;
+             padding-top:1em;
+             padding-bottom:1em!important;
+			 display:block;
+		}
+
+	</style>
+</head>
+
+<body>
+	<table cellpadding="0" cellspacing="0" style="margin-bottom:10px; border-color:#FFF;width:100%;" border="1">
+		<tr>
+			<td width="20%" style="text-align:center;border:solid 0px #FFF">
+				<label></label>
+			</td>
+			<td width="60%" style="text-align:center;border:solid 0px #FFF">Device Config</td>
+			<td width="20%" style="text-align:center;border:solid 0px #FFF"><button onclick="goTestPage()" type="button" style="width:100%">TEST &gt;</button></td>
+		</tr>
+	</table>
+	<div class="content">
+		<div class="content-all">
+		<form action="{value_host}" method="post">  
+			<table cellpadding="5%">
+				<tr>
+					<td><label>ETH0 IP</label></td>
+					<td class="textbox"><div><input type="text" name="ip" value="{value_ip}"></div></td>
+				</tr>
+				<tr>
+					<td><label>UNIT</label></td>
+					<td><div><input type="text" name="unit" value="{value_unit}"></div></td>
+				</tr>
+				<tr>
+					<td><label>CHANNEL</label></td>
+					<td><div><input type="text" name="channel" value="{value_channel}"></div></td>
+				</tr>
+				<tr>
+					<td><label>DEVICE_CODE</label></td>
+					<td><div><input type="text" name="device_code" value="{value_device_code}"></div></td>
+				</tr>
+				<tr>
+					<td><label>BATTERY</label></td>
+					<td><div><input type="text" name="battery" value="{value_battery}"></div></td>
+				</tr>
+				<tr>
+					<td><label>MES URL</label></td>
+					<td><div><input type="text" name="mes_url" value="{value_mes_url}"></div></td>
+				</tr>
+				<tr>
+					<td colspan="2"><button type="button" onclick="remove('d')" class="button2"  id="senior" >Advanced</button></td>
+				</tr>
+				<tr class="senior-content" style="display:none">
+					<td><label>DB_NAME</label></td>
+					<td><div><input type="text" name="db_name" value="{value_db_name}"></div></td>
+				</tr>
+				<tr class="senior-content" style="display:none">
+					<td><label>DB_IP</label></td>
+					<td><div><input type="text" name="db_ip" value="{value_db_ip}"></div></td>
+				</tr>
+				<tr class="senior-content" style="display:none">
+					<td><label>DB_USER</label></td>
+					<td><div><input type="text" name="db_user" value="{value_db_user}"></div></td>
+				</tr>
+				<tr class="senior-content" style="display:none">
+					<td><label>DB_PWD</label></td>
+					<td><div><input type="text" name="db_pwd" value="{value_db_pwd}"></div></td>
+				</tr>
+				<tr class="senior-content" style="display:none">
+					<td><label>LOOP_TIME</label></td>
+					<td><div><input type="text" name="loop_time" value="{value_loop_time}"></div></td>
+				</tr>
+				<tr class="senior-content" style="display:none">
+					<td><label>CURVE_RATIO</label></td>
+					<td><div><input type="text" name="curve_ratio" value="{value_curve_ratio}"></div></td>
+				</tr>
+				<tr class="senior-content" style="display:none">
+					<td><label>MAX_CHG</label></td>
+					<td><div><input type="text" name="max_chg" value="{value_max_chg}"></div></td>
+				</tr>
+				<tr class="senior-content" style="display:none">
+					<td><label>MAX_DISCHG</label></td>
+					<td><div><input type="text" name="max_dischg" value="{value_max_dischg}"></div></td>
+				</tr>
+					
+				<tr>
+					<td colspan="2"><button  type="button" id="hidden" class="button2" onclick="remove('h')"  style="display:none;">Hide</button></td>
+				</tr>
+				<tr>
+					<td colspan="2" style="text-align:center"><button type="button" onclick="onAlert()" class="alert button1">ALERT</button></td>
+					
+				</tr>
+				<tr>
+					<td colspan="2" style="text-align:center"><button type="submit" class="save button1">SAVE</button></td>
+				</tr>
+			</table>
+			</form>
+		</div>
+	</div>
+	<script type="text/javascript">
+
+		
+		
+		function remove(btn){
+			if(btn=="d"){
+				var obj = document.getElementsByClassName("senior-content");
+				for(var i=0;i<obj.length;i++){
+					document.getElementsByClassName("senior-content")[i].style.display="";
+				}
+				document.getElementById("hidden").style.display="";
+				document.getElementById("senior").style.display="none";
+			}else{
+				var obj = document.getElementsByClassName("senior-content");
+				for(var i=0;i<obj.length;i++){
+					document.getElementsByClassName("senior-content")[i].style.display="none";
+				}
+				document.getElementById("hidden").style.display="none";
+				document.getElementById("senior").style.display="";
+			}	
+		}
+		
+		function onAlert(){
+			sendAjax("A=ALERT","get");
+		}
+	
+		function goTestPage(){
+			location.href = "{value_host}?A=TEST";
+		}
+	
+		// 创建XMLHttpRequest对象
+		function createXMLHttpRequest() {
+			if (window.XMLHttpRequest) {// IE 7.0及以上版本和非IE的浏览器
+				xmlHttpReq = new XMLHttpRequest();
+			} else {// IE 6.0及以下版本
+				try {
+					xmlHttpReq = new ActiveXObject("MSXML2.XMLHTTP");
+				}catch (e) {
+					try {
+						xmlHttpReq = new ActiveXObject("Microsoft.XMLHTTP");
+					}catch (e) {}
+				}
+			}
+			if (!xmlHttpReq) {
+				alert("当前浏览器不支持!");
+				return null;
+			}
+			return xmlHttpReq;
+		}
+			
+		//Ajax请求
+		function sendAjax(txtValue,requestMethod){
+			ret = "";
+			if(txtValue!=""){
+				var parameter = txtValue;
+				var requestURL = "{value_host}?" + parameter;
+				xmlHttpReq = createXMLHttpRequest();
+				if("GET" == requestMethod.trim().toUpperCase()){
+					xmlHttpReq.open("GET",requestURL,true);
+					xmlHttpReq.setRequestHeader("If-Modified-Since","0");
+					xmlHttpReq.send("null");
+				}else{
+					alert("错误的请求方式！");
+					return;
+				}
+				xmlHttpReq.onreadystatechange = function(){
+					if(xmlHttpReq.readyState == 4){
+						switch(xmlHttpReq.status){
+							case 200:
+								ret = xmlHttpReq.responseText;
+								break;
+							case 400:
+								alert("错误的请求！\nError Code:400!");
+								break;
+							case 403:
+								alert("拒绝请求！\nError Code:403!");
+								break;
+							case 404:
+								alert("请求地址不存在！\nError Code:404!");
+								break;
+							case 500:
+								alert("内部错误！\nError Code:500!");
+								break;
+							case 503:
+								alert("服务不可用！\nError Code:503!");
+								break;
+							default:
+								alert("请求返回异常！\nError Code:"+xmlHttpReq.status);
+								break;
+						}
+						
+					}
+				}
+			}
+		}
+	</script>
+</body>
+</html>

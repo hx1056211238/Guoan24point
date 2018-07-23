@@ -1,0 +1,205 @@
+import os
+import socket
+import time
+import sys
+import threading
+import traceback
+import logging
+import json
+start_time = 0
+onceAgain = 0
+
+
+class switch(object):
+        def __init__(self, value):
+                self.value = value
+                self.fall = False
+        def __iter__(self):
+                """Return the match method once, then stop"""
+                yield self.match
+                raise StopIteration
+        def match(self, *args):
+                """Indicate whether or not to enter a case suite"""
+                if self.fall or not args:
+                        return True
+                elif self.value in args: # changed for v1.5, see below
+                        self.fall = True
+                        return True
+                else:
+                        return False
+  
+              
+
+def do_json_command_solver(s_json): 
+        global onceAgain  
+        global start_time
+        try:
+                obj_json = json.loads(s_json)
+                action = obj_json["action"]
+                print "obj_json",obj_json
+        except Exception,e:
+                logging.error('get json error:' + s_json)
+                ret = '{"success":"false","msg":"json decode error"}'
+                #return ret            
+        
+        ret = '{"success":"false"}'
+        
+        for case in switch(action):
+                if case('reset_wlan0'):
+                        obj = {"success": "true", "message":"", "action":"reset_wlan0"}
+                        ret = json.dumps(obj)
+                        onceAgain = 0
+                        os.system("sudo ifup wlan0")
+                        os.system("sudo service hostapd stop")
+                        os.system("sudo service hostapd start")
+                        start_time = time.time()
+                        #ResetIpFun()                
+                        break
+                if case('close_wlan0'):
+                        obj = {"success": "true", "message":"", "action":"close_wlan0"}
+                        ret = json.dumps(obj)
+                        os.system("sudo service hostapd stop")
+                        os.system("sudo ifdown wlan0")
+                        onceAgain = 3
+                        break
+
+                        
+        return ret
+
+
+class cls_udp_Thread(threading.Thread):
+        def __init__(self, name):
+                threading.Thread.__init__(self)
+                self.t_name = name
+        def run(self):
+                sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  
+                sock.bind(('', 6666))    
+                while True: 
+                        revcData, (remoteHost, remotePort) = sock.recvfrom(65526)
+                        ret = do_json_command_solver(revcData)
+                        #print("[%s:%s] connect" % (remoteHost, remotePort))   
+
+
+                        if len(ret)>32768:
+                                n = len(ret) / 32768
+                                m = len(ret) % 32768
+                                for i in range(0,n):
+                                        print "io: " + str(len(ret[i*32768:i*32768+32768]))
+                                        sock.sendto(ret[i*32768:i*32768+32768], (remoteHost, remotePort)) 
+                                
+                                #print len(ret[(i+1)*32768:(i+1)*32768+m])
+                                
+                                sock.sendto(ret[(i+1)*32768:(i+1)*32768+m], (remoteHost, remotePort))
+                        else:
+                                sock.sendto(ret, (remoteHost, remotePort))
+                                
+                        #print "revcData: ", revcData  
+                        #print "sendDataLen: ", sendDataLen  
+
+                sock.close() 
+
+  
+               
+def ResetIpFun():      
+    #os.system("sudo ifup wlan0")  
+    #os.system("sudo service hostapd start")   
+    os.system("sudo cat /sys/block/mmcblk0/device/cid |cut -c19-26" )
+    id = open("/sys/block/mmcblk0/device/cid","r")
+    id = id.read()[18:26]
+    print str(id)
+    sn = "HF_AP_"+str(id) +"\n"
+    print sn
+    os.system("sudo chmod 777 /etc/hostapd/hostapd.conf")
+    fs = open("/etc/hostapd/hostapd.conf","w")
+    fs.write("interface=wlan0\n")
+    fs.write("driver=nl80211\n")
+    fs.write("ssid="+sn)
+    fs.write("hw_mode=g\n")
+    fs.write("channel=6\n")
+    fs.write("wmm_enabled=1\n")
+    fs.write("macaddr_acl=0\n")
+    fs.write("auth_algs=1\n")
+    fs.write("ignore_broadcast_ssid=0\n")
+    fs.write("wpa=2\n")
+    fs.write("wpa_passphrase=123456788\n")
+    fs.write("wpa_key_mgmt=WPA-PSK\n")
+    fs.write("rsn_pairwise=CCMP\n")
+    fs.close()
+    # time.sleep(2)
+    #sudo service hostapd start
+	#os.system()
+    os.system("sudo hostapd -d /etc/hostapd/hostapd.conf")
+    os.system("sudo service hostapd stop")
+    os.system("sudo service hostapd start")
+	
+
+
+class cls_ResetIp_Thread(threading.Thread):
+        def __init__(self, name):
+                threading.Thread.__init__(self)
+                self.t_name = name
+        def run(self):
+            global onceAgain
+            global start_time
+            while True:
+                #print "ResetIP_Thread"
+                time.sleep(1)
+                if onceAgain == 0 :
+                    onceAgain = 1
+                    ResetIpFun()
+                    #os.system("sudo service hostapd start")
+                    print "open the wlan0 again" 
+
+'''
+start_time = time.time()
+
+while True:
+    time.sleep(2)
+    #print "main thread"
+    if time.time() - start_time >3*60:
+        os.system("sudo ifdown wlan0")
+
+
+'''
+
+def main():
+    global start_time
+    global onceAgain
+    onceAgain = 0
+
+    _th_udp_IP = cls_udp_Thread("_th_udp_IP")
+    _th_udp_IP.setDaemon(True)
+    _th_udp_IP.start()
+
+    _th_reset_ip = cls_ResetIp_Thread("_th_reset_ip")
+    _th_reset_ip.setDaemon(True)
+    _th_reset_ip.start()
+
+    #ResetIpFun()
+    start_time = time.time()
+    while True:
+        time.sleep(2)
+        #print "main_thread"
+
+        if time.time() - start_time > 2*60 and onceAgain ==1: 
+            onceAgain = 2       
+            os.system("sudo ifdown wlan0")
+            os.system("sudo service hostapd stop")
+            print "close the wlan0"
+               
+if __name__ == '__main__':  
+    try:  
+        #signal.signal(signal.SIGINT, exit_gracefully)
+        main()    
+    except Exception,e:
+        try:
+            raise TypeError("resetIP error: ")
+        except:
+            pass
+        finally:
+            pass
+            traceback.print_exception(*exc_info)
+                        #del exe_info
+        # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
+#{"action": "reset_wlan0","data":{}}
+    

@@ -1,0 +1,249 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html lang="en">
+<head>
+	<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+	<title>Document</title>
+	<style type="text/css">
+		.content{
+			width: 100%;
+			height:100%;
+			/* background-color: red; */  
+			/* overflow: hidden; */
+		}
+		.content-all{
+			width: 95%;
+			height: 95%;
+			margin: 0 auto;
+			/* background-color: blue; */ 
+		}
+
+		.senior{
+			margin-top:4%;
+		}
+		
+		input{
+			font-size: 16px;
+			height: 30px;
+			width: 95%;
+			text-align: center;
+		}
+		td{
+			text-align: center;
+		}
+		.button1{
+			 padding-right: 1em;
+             padding-left: 1em;
+             margin-right: auto;
+             margin-left:auto;
+             padding-top:1em;
+             padding-bottom:1em!important;
+			 display:block;
+			 min-width:120px;
+		}
+	</style>
+</head>
+
+<body>
+	<table cellpadding="0" cellspacing="0" style="margin-bottom:10px; border-color:#FFF;width:100%;" border="1">
+		<tr>
+			<td width="20%" style="text-align:center;border:solid 0px #FFF">
+				<button onclick="goConfigPage()" type="button" style="width:100%">&lt; CONF</button>
+				
+			</td>
+			<td width="60%" style="text-align:center;border:solid 0px #FFF">Device Test</td>
+			<td width="20%" style="text-align:center;border:solid 0px #FFF"><label></label></td>
+		</tr>
+	</table>
+	<div class="content">
+		<div class="content-all">
+		
+		<form>
+			<table cellpadding="5%">
+				<tr>
+					<td><label>VOLTAGE</label></td>
+					<td><div><input type="text" value="4200" id="voltage"></div></td>
+				</tr>
+				<tr>
+					<td><label>CURRENT</label></td>
+					<td><div><input type="text" value="300" id="current"></div></td>
+				</tr>
+				<tr>
+					<td style="text-align:center"><button onclick="onChg()" type="button"     class="alert button1">CVCHG</button></td>
+					<td style="text-align:center"><button onclick="onDisChg()" type="button" class="alert button1">DISCHG</button></td>
+				</tr>
+				<tr>
+					<td style="text-align:center"><button onclick="onAlert()" type="button"  class="alert button1">ALERT</button></td>
+					<td style="text-align:center"><button onclick="onReset()" type="button" class="alert button1">RESET</button></td>
+				</tr>
+				<tr>
+					<td colspan="2"><hr></td>
+				</tr>
+				<tr>
+					<td><label>STATUS</label></td>
+					<td><div><input type="text" value="" id="status"></div></td>
+				</tr>
+				<tr>
+					<td><label>EXP</label></td>
+					<td><div><input type="text" value="" id="exp"></div></td>
+				</tr>
+				<tr>
+					<td><label>MSG</label></td>
+					<td><div><input type="text" value="" id="msg"></div></td>
+				</tr>
+				<tr>
+					<td colspan="2">
+						<table id="battery_show">
+						 </table>
+					 </td>
+				</tr>
+			</table>
+			</form>
+		</div>
+	</div>
+	<script type="text/javascript">
+	
+		window.onload=function(){
+			var battery_obj = document.getElementById('battery_show');
+      		var batteryCount=256;
+      		var battery_str = "";
+
+			function pad(num, n) {  
+			    var len = num.toString().length;  
+			    while(len < n) {  
+			        num = "0" + num;  
+			        len++;  
+			    }  
+			    return num;  
+			} 
+
+      		for (var i = 1; i <= batteryCount; i++) {
+      			y = pad(i,3);
+      			battery_str+= '<tr><td><label>'+y+'</label></td><td><div><input type="text" value="" id="' + i + '_V"></div></td><td><div><input type="text" value="" id="' + i + '_C"></div></td></tr>';
+      		};
+      		battery_obj.innerHTML = battery_str;
+			
+			
+			var i_timer = self.setInterval(function (){
+				sendAjax("A=UNIT_DATA","get", function(ret){
+					if(ret!==""){
+						try{
+							var obj = JSON.parse(ret);
+							var title = new Array("RESET","CCCHG","CVCHG", "WAIT", "DISCHG", "", "FINISH")
+							document.getElementById("status").value = (title[obj["data"][0]["station"]]);
+							document.getElementById("exp").value = (obj["data"][0]["exp"]);
+							document.getElementById("msg").value = (obj["data"][0]["exp_msg"]);
+						}catch(e){
+						}
+					}
+					
+					sendAjax("A=BATTERY_DATA","get", function(ret){
+						if(ret!==""){
+							try{
+								var obj = JSON.parse(ret);
+								for(i=0;i<256;i++){
+									document.getElementById((i+1) + "_V").value = (obj["data"][i]["voltage"]);
+									document.getElementById((i+1) + "_C").value = (obj["data"][i]["current"]);
+								}
+							}catch(e){
+							}
+						}
+						//console.log(ret);
+					});
+				});
+			},2000);
+
+		}	
+		
+		
+		function goConfigPage(){
+			location.href = "{value_host}";
+		}
+		
+		function onAlert(){
+			sendAjax("A=ALERT","get", null);
+		}
+		
+		function onReset(){
+			sendAjax("A=RESET","get", null);
+		}
+		
+		function onChg(){
+			sendAjax("A=CHG&V=" + document.getElementById("voltage").value + "&C=" + document.getElementById("current").value,"get", null);
+		}
+		
+		function onDisChg(){
+			sendAjax("A=DISCHG&V=" + document.getElementById("voltage").value + "&C=" + document.getElementById("current").value,"get", null);
+		}
+		
+		// 创建XMLHttpRequest对象
+		function createXMLHttpRequest() {
+			if (window.XMLHttpRequest) {// IE 7.0及以上版本和非IE的浏览器
+				xmlHttpReq = new XMLHttpRequest();
+			} else {// IE 6.0及以下版本
+				try {
+					xmlHttpReq = new ActiveXObject("MSXML2.XMLHTTP");
+				}catch (e) {
+					try {
+						xmlHttpReq = new ActiveXObject("Microsoft.XMLHTTP");
+					}catch (e) {}
+				}
+			}
+			if (!xmlHttpReq) {
+				alert("当前浏览器不支持!");
+				return null;
+			}
+			return xmlHttpReq;
+		}
+			
+		//Ajax请求
+		function sendAjax(txtValue,requestMethod,callback){
+			ret = "";
+			if(txtValue!=""){
+				var parameter = txtValue;
+				var requestURL = "{value_host}?" + parameter;
+				xmlHttpReq = createXMLHttpRequest();
+				if("GET" == requestMethod.trim().toUpperCase()){
+					xmlHttpReq.open("GET",requestURL,true);
+					xmlHttpReq.setRequestHeader("If-Modified-Since","0");
+					xmlHttpReq.send("null");
+				}else{
+					alert("错误的请求方式！");
+					return;
+				}
+				xmlHttpReq.onreadystatechange = function(){
+					if(xmlHttpReq.readyState == 4){
+						switch(xmlHttpReq.status){
+							case 200:
+								ret = xmlHttpReq.responseText;
+								break;
+							case 400:
+								alert("错误的请求！\nError Code:400!");
+								break;
+							case 403:
+								alert("拒绝请求！\nError Code:403!");
+								break;
+							case 404:
+								alert("请求地址不存在！\nError Code:404!");
+								break;
+							case 500:
+								alert("内部错误！\nError Code:500!");
+								break;
+							case 503:
+								alert("服务不可用！\nError Code:503!");
+								break;
+							default:
+								alert("请求返回异常！\nError Code:"+xmlHttpReq.status);
+								break;
+						}
+						
+						if (typeof callback === "function"){
+							callback(ret);
+						}
+					}
+				}
+			}
+		}
+	</script>
+</body>
+</html>

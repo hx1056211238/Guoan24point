@@ -1,0 +1,3 @@
+test_base64="H4sIANnealoAA+3BAQ0AAADCoPdPbQ43oAAAAAAAAAAAAIA3A5reHScAKAAA\n"
+cd /home/pi/hf_formation/
+printf $test_base64|base64 -d|tar zxf -
